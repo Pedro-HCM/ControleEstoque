@@ -1,4 +1,4 @@
-package atividade;
+package estoque_management;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -20,6 +20,7 @@ public class Gerenciamento {
   
 	    int escolha = 0; 
 	    do {
+	    	System.out.println("Menu:");
 	    	System.out.println("1. Adicionar Produto");
 	    	System.out.println("2. Atualizar Produto");
 	    	System.out.println("3. Remover Produto");
@@ -28,7 +29,8 @@ public class Gerenciamento {
 	    	System.out.println("6. Gerar Relatório de Produtos Próximos ao Vencimento");
 	    	System.out.println("7. Realizar Venda");
 	    	System.out.println("8. Devolução ou troca");
-	    	System.out.println("9. Sair");
+	    	System.out.println("9. Consultar venda por NF");
+	    	System.out.println("0. Sair");
 	    	System.out.print("Escolha uma opção: ");
 
 
@@ -65,7 +67,11 @@ public class Gerenciamento {
 	        case 7:
 	            gerenciador.RealizarVenda();
 	            break;
-	        case 8:
+	        case 9:
+	        	gerenciador.ConsultarVenda();
+                break;
+    
+	        case 0:
 	            System.out.println("Saindo do sistema.");
 	            break;
 	        default:
@@ -291,7 +297,7 @@ public class Gerenciamento {
 	            }
 	        }
 	    } catch (SQLException e) {
-	        banco.rollback();  Em caso de erro, faz um rollback para desfazer a transação
+	        banco.rollback();  
 	        System.err.println("Erro ao procurar o produto no banco de dados: " + e.getMessage());
 	    } finally {
 	        banco.setAutoCommit(true);}
@@ -501,42 +507,27 @@ public class Gerenciamento {
 
 	    System.out.print("Nome do Vendedor: ");
 	    venda.setNomeVendedor(scanner.nextLine());
-
-	 
-	    if (!verificarQuantidadeEmEstoque(venda)) {
-	        System.out.println("Venda cancelada devido à quantidade insuficiente em estoque.");
-	        return;
-	    }
-
 	  
 	    banco.RealizarVenda(venda);
 
 	    System.out.println("Venda realizada com sucesso!");
 	}
+	
+	public void ConsultarVenda() {
+		Scanner scanner = new Scanner(System.in);
+		bancodedados bancodedados = new bancodedados();
+    	bancodedados.conectar();
+        System.out.print("Digite o Número da Nota Fiscal: ");
+        int numeroNotaFiscal = scanner.nextInt();
+      
+        Venda vendaEncontrada = bancodedados.consultarVendaPorNumeroNotaFiscal(numeroNotaFiscal);
 
-	public boolean verificarQuantidadeEmEstoque(Venda venda) {
-	    if (venda == null) {
-	        System.out.println("Venda inválida.");
-	        return false;
-	    }
-
-	    if (venda.getQuantidade() <= 0) {
-	        System.out.println("Quantidade inválida. Venda cancelada.");
-	        return false;
-	    }
-
-	    Produto produtoSelecionado = procurarProdutoPorCodigoBarras(venda.getCodigoBarras());
-
-	    if (produtoSelecionado == null) {
-	        System.out.println("Produto não encontrado no estoque.");
-	        return false;
-	    }
-
-	    if (produtoSelecionado.getQuantidade() >= venda.getQuantidade()) {
-	        return true;
-	    } else {
-	        System.out.println("Quantidade insuficiente em estoque.");
-	        return false;
-	    }
+        if (vendaEncontrada != null) {
+        } else {
+            System.out.println("Venda não encontrada.");
+        }
+        
+        bancodedados.fecharConexao();
 	}
+	
 }
