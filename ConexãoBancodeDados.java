@@ -260,7 +260,7 @@ public class bancodedados {
 	        commit(); 
 	    } catch (SQLException e) {
 	        rollback(); 
-	      //  System.err.println("Erro ao inserir a venda no banco de dados: " + e.getMessage());
+	       System.err.println("Erro ao inserir a venda no banco de dados: " + e.getMessage());
 	    }
 	}
 }
