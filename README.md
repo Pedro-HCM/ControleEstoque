@@ -14,3 +14,6 @@ Desperdício de tempo: Sem um sistema automatizado, a gestão de estoque muitas 
 
 Falta de planejamento: A ausência de dados precisos de estoque dificulta o planejamento a longo prazo e a tomada de decisões informadas sobre compras, promoções e estratégias de marketing.
 No entanto, é importante destacar que, com a evolução da tecnologia e o acesso a sistemas de controle de estoque acessíveis, os microempreendedores têm a oportunidade de superar essas dificuldades. A implementação de ferramentas de gerenciamento de estoque pode proporcionar maior eficiência, reduzir o estresse e permitir que eles foquem mais em fazer crescer seus negócios. Portanto, superar essa dificuldade é uma etapa essencial no caminho para o sucesso sustentável como microempreendedor.
+##Criadores
+[![GitHub Profile](https://img.shields.io/badge/GitHub-Pedro-HCM-blue)](https://github.com/Pedro-HCM)
+![Perfil do GitHub](https://avatars.githubusercontent.com/u/92341351?s=96&v=4)
