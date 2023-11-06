@@ -1,5 +1,5 @@
-//Ness arquivo você encontrara as conexões entre os metodos usados no Codigo Main e o Banco de Dados MYSQL.
-package atividade;
+package estoque_management;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -16,9 +16,11 @@ public class bancodedados {
     private Connection connection;
 
     public void conectar() {
-        String jdbcUrl = "jdbc:mysql://localhost:3306/estoque2";
+        String jdbcUrl = "jdbc:mysql://localhost:3306/estoque";
         String user = "root";
         String password = "635241";
+        
+        
 
         try {
             connection = DriverManager.getConnection(jdbcUrl, user, password);
@@ -87,7 +89,7 @@ public class bancodedados {
                 commit(); 
             } else {
                 System.out.println("Produto não encontrado no banco de dados. Nenhum produto foi excluído.");
-                rollback();  Desfaz a transação em caso de erro
+                rollback();  
             }
         } catch (SQLException e) {
             rollback();
@@ -229,7 +231,7 @@ public class bancodedados {
 
 	         
 	            if (quantidadeEmEstoque >= quantidadeDesejada) {
-	                return true;  Quantidade em estoque é suficiente
+	                return true;
 	            } else {
 	                return false; 
 	            }
@@ -241,26 +243,107 @@ public class bancodedados {
 	        return false; 
 	    }
 	}
-
+	
 	public void RealizarVenda(Venda venda) {
 	    try {
-	       
-	        String sql = "INSERT INTO vendas (produto, codigo_de_barras, quantidade, valor_venda, data_da_venda, nome_vendedor) VALUES (?, ?, ?, ?, ?, ?)";
+
+	        String consultaUltimoNumeroSQL = "SELECT MAX(numero_nota_fiscal) AS ultimo_numero FROM vendas";
+	        PreparedStatement consultaUltimoNumeroStatement = connection.prepareStatement(consultaUltimoNumeroSQL);
+	        ResultSet resultadoConsulta = consultaUltimoNumeroStatement.executeQuery();
+	        int ultimoNumeroNotaFiscal = 0;
+	        String codigoDeBarras = venda.getCodigoBarras();
+	        int quantidadeDesejada = venda.getQuantidade();
+
+	        if (resultadoConsulta.next()) {
+	            ultimoNumeroNotaFiscal = resultadoConsulta.getInt("ultimo_numero");
+	        }
+	        int novoNumeroNotaFiscal = ultimoNumeroNotaFiscal + 1;
+	        
+	        if (verificarQuantidadeEmEstoque(codigoDeBarras, quantidadeDesejada)) {
+
+	        String sql = "INSERT INTO vendas (produto, codigo_de_barras, quantidade, valor_venda, data_da_venda, nome_vendedor, numero_nota_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?)";
 	        PreparedStatement statement = connection.prepareStatement(sql);
+	        
+	        String sqlAtualizarQuantidade = "UPDATE Produto SET Quantidade = Quantidade - ? WHERE CodigoDeBarras = ?";
+            PreparedStatement statementAtualizarQuantidade = connection.prepareStatement(sqlAtualizarQuantidade);
+            statementAtualizarQuantidade.setInt(1, venda.getQuantidade());
+            statementAtualizarQuantidade.setString(2, venda.getCodigoBarras());
+            statementAtualizarQuantidade.executeUpdate();
+	        
 	        statement.setString(1, venda.getNomeProduto());
 	        statement.setString(2, venda.getCodigoBarras());
 	        statement.setInt(3, venda.getQuantidade());
 	        statement.setDouble(4, venda.getValorVenda());
 	        statement.setDate(5, new java.sql.Date(venda.getDataVenda().getTime()));
 	        statement.setString(6, venda.getNomeVendedor());
+	        statement.setInt(7, novoNumeroNotaFiscal);
 
-	        
 	        statement.executeUpdate();
-	        System.out.println("Venda inserida com sucesso no banco de dados.");
-	        commit(); 
+	        System.out.println("Venda inserida com sucesso. Número da nota fiscal: " + novoNumeroNotaFiscal);
+	        commit();
+	        } else {
+	            System.out.println("Quantidade insuficiente em estoque para realizar a venda.");
+	            rollback();
+	        }
 	    } catch (SQLException e) {
-	        rollback(); 
+	        rollback();
 	        System.err.println("Erro ao inserir a venda no banco de dados: " + e.getMessage());
+	    }
+	}
+
+	
+	public Venda consultarVendaPorNumeroNotaFiscal(int numeroNotaFiscal) {
+	    Venda vendaEncontrada = null;
+	    try {
+	        String sql = "SELECT * FROM vendas WHERE numero_nota_fiscal = ?";
+	        PreparedStatement statement = connection.prepareStatement(sql);
+	        statement.setInt(1, numeroNotaFiscal);
+	        ResultSet resultSet = statement.executeQuery();
+
+	        if (resultSet.next()) {
+	            String codigoDeBarras = resultSet.getString("codigo_de_barras");
+	            String produto = resultSet.getString("produto");
+	            int quantidade = resultSet.getInt("quantidade");
+	            double valorVenda = resultSet.getDouble("valor_venda");
+	            Date dataVenda = resultSet.getDate("data_da_venda");
+	            String nomeVendedor = resultSet.getString("nome_vendedor");
+
+	            vendaEncontrada = new Venda(codigoDeBarras, produto, quantidade, valorVenda, dataVenda, nomeVendedor);
+
+	            System.out.println("Venda encontrada: ");
+	            System.out.println("Produto: " + vendaEncontrada.getNomeProduto());
+	            System.out.println("Quantidade: " + vendaEncontrada.getQuantidade());
+	            System.out.println("Valor de Venda: " + vendaEncontrada.getValorVenda());
+	            System.out.println("Data da Venda: " + vendaEncontrada.getDataVenda());
+	            System.out.println("Nome do Vendedor: " + vendaEncontrada.getNomeVendedor());
+	        } else {
+	            System.out.println("Venda com Número da Nota Fiscal " + numeroNotaFiscal + " não encontrada.");
+	        }
+	        statement.close();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return vendaEncontrada;
+	}
+
+
+	
+	public boolean verificarCodigoBarrasExistente(String codigoDeBarras) {
+	    try {
+	        String sql = "SELECT COUNT(*) AS count FROM Produto WHERE CodigoDeBarras = ?";
+	        PreparedStatement statement = connection.prepareStatement(sql);
+	        statement.setString(1, codigoDeBarras);
+	        ResultSet resultSet = statement.executeQuery();
+
+	        if (resultSet.next()) {
+	            int count = resultSet.getInt("count");
+	            return count > 0;
+	        } else {
+	            return false;
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
 	    }
 	}
 }
