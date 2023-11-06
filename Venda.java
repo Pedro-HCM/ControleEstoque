@@ -1,15 +1,16 @@
-package estoque_management;
+package atividade;
+
 import java.util.Calendar;
 import java.util.Date;
 
 public class Venda {
     
 
-    public String produto;
-    public String codigo_de_barras;
+    public String produto; // Em vez de nomeProduto
+    public String codigo_de_barras; // Em vez de codigoBarras
     public int quantidade;
-    public double valor_venda;
-    public Date data_da_venda;
+    public double valor_venda; // Em vez de valorVenda
+    public Date data_da_venda; // Em vez de dataVenda
     public String nome_vendedor;
 
     public Venda(String codigo_de_barras, String produto, int quantidade, double valor_venda, Date data_da_venda, String nome_vendedor) {
@@ -22,8 +23,10 @@ public class Venda {
     }
 
     public Venda() {
+		// TODO Auto-generated constructor stub
 	}
 
+	// Getters e Setters para cada variável, se necessário
     public String getNomeProduto() {
         return produto;
     }
@@ -76,22 +79,6 @@ public class Venda {
 	
 		return null;
 	}
-	
-	private int numeroNotaFiscal;
-
-    public Venda(String codigo_de_barras, String produto, int quantidade, double valor_venda, Date data_da_venda, String nome_vendedor, int numeroNotaFiscal) {
-
-        this.numeroNotaFiscal = numeroNotaFiscal;
-
-    }
-
-    public int getNumeroNotaFiscal() {
-        return numeroNotaFiscal;
-    }
-
-    public void setNumeroNotaFiscal(int numeroNotaFiscal) {
-        this.numeroNotaFiscal = numeroNotaFiscal;
-    }
 
     
 }
