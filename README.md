@@ -18,6 +18,6 @@ No entanto, é importante destacar que, com a evolução da tecnologia e o acess
 ## Criadores
 <table>
   <tr>
-    <td align="center"><a href="https://https://github.com/Pedro-HCM"><img src="https://avatars.githubusercontent.com/u/92341351?v=4" width="100px;" alt=""/><br /><sub><b>Pedro Henrique</b></sub></a><br /> <a>62122976</a></td>
+    <td align="center"><a href="https://github.com/Pedro-HCM"><img src="https://avatars.githubusercontent.com/u/92341351?v=4" width="100px;" alt=""/><br /><sub><b>Pedro Henrique</b></sub></a><br /> <a>62122976</a></td>
   <tr>
 <table
