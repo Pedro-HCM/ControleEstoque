@@ -20,6 +20,7 @@ public class Gerenciamento {
   
 	    int escolha = 0; 
 	    do {
+	    	System.out.println("Menu:");
 	    	System.out.println("1. Adicionar Produto");
 	    	System.out.println("2. Atualizar Produto");
 	    	System.out.println("3. Remover Produto");
@@ -28,7 +29,8 @@ public class Gerenciamento {
 	    	System.out.println("6. Gerar Relatório de Produtos Próximos ao Vencimento");
 	    	System.out.println("7. Realizar Venda");
 	    	System.out.println("8. Devolução ou troca");
-	    	System.out.println("9. Sair");
+	    	System.out.println("9. Consultar venda por NF");
+	    	System.out.println("0. Sair");
 	    	System.out.print("Escolha uma opção: ");
 
 
@@ -66,13 +68,19 @@ public class Gerenciamento {
 	            gerenciador.RealizarVenda();
 	            break;
 	        case 8:
+	            gerenciador.TrocaOuDevolucao();
+	            break;
+	        case 9:
+	            gerenciador.ConsultarVenda();
+	            break;
+	        case 0:
 	            System.out.println("Saindo do sistema.");
 	            break;
 	        default:
 	            System.out.println("Opção inválida. Tente novamente.");
 	    }
 
-	    } while (escolha != 8);
+	} while (escolha != 0);
 
 	    scanner.close();
 	    }
@@ -291,7 +299,7 @@ public class Gerenciamento {
 	            }
 	        }
 	    } catch (SQLException e) {
-	        banco.rollback();  Em caso de erro, faz um rollback para desfazer a transação
+	        banco.rollback();  
 	        System.err.println("Erro ao procurar o produto no banco de dados: " + e.getMessage());
 	    } finally {
 	        banco.setAutoCommit(true);}
@@ -460,83 +468,173 @@ public class Gerenciamento {
 	}
 	public void RealizarVenda() {
 	    Scanner scanner = new Scanner(System.in);
-
-	 
 	    bancodedados banco = new bancodedados();
 
-	    
 	    banco.conectar();
 
-	   
-	    Venda venda = new Venda();
+	    do {
+	        Venda venda = new Venda();
 
-	    
-	    System.out.print("Nome do Produto: ");
-	    venda.setNomeProduto(scanner.nextLine());
+	        System.out.print("Nome do Produto: ");
+	        venda.setNomeProduto(scanner.nextLine());
 
-	    System.out.print("Código de Barras: ");
-	    venda.setCodigoBarras(scanner.nextLine());
+	        System.out.print("Código de Barras: ");
+	        String codigoBarras = scanner.nextLine();
+	        
+	        // Verificar se o produto existe e corresponde ao código de barras
+	        if (!banco.verificarCorrespondenciaProduto(codigoBarras, venda.getNomeProduto())) {
+	            System.out.println("O nome do produto não corresponde ao código de barras. Venda cancelada.");
+	            continue; // Volta ao início do loop para uma nova venda
+	        }
+	        
+	        venda.setCodigoBarras(codigoBarras);
 
-	    System.out.print("Quantidade: ");
-	    venda.setQuantidade(scanner.nextInt());
+	        System.out.print("Quantidade: ");
+	        venda.setQuantidade(scanner.nextInt());
 
-	    System.out.print("Valor da Venda: ");
-	    venda.setValorVenda(scanner.nextDouble());
-	    scanner.nextLine(); 
+	        System.out.print("Valor da Venda: ");
+	        venda.setValorVenda(scanner.nextDouble());
+	        scanner.nextLine(); 
 
-	    System.out.print("Data da Venda (YYYY-MM-DD): ");
-	    String data_da_venda_str = scanner.nextLine();
-	    Date data_da_venda;
+	        System.out.print("Data da Venda (YYYY-MM-DD): ");
+	        String data_da_venda_str = scanner.nextLine();
+	        Date data_da_venda;
 
-	    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	    try {
-	        data_da_venda = sdf.parse(data_da_venda_str);
-	        venda.setDataVenda(data_da_venda);
-	    } catch (ParseException e) {
-	        e.printStackTrace();
-	        System.out.println("Formato de data inválido. Venda cancelada.");
-	        scanner.close();
-	        return; 
-	    }
+	        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	        try {
+	            data_da_venda = sdf.parse(data_da_venda_str);
+	            venda.setDataVenda(data_da_venda);
+	        } catch (ParseException e) {
+	            e.printStackTrace();
+	            System.out.println("Formato de data inválido. Venda cancelada.");
+	            continue; // Volta ao início do loop para uma nova venda
+	        }
 
-	    System.out.print("Nome do Vendedor: ");
-	    venda.setNomeVendedor(scanner.nextLine());
+	        System.out.print("Nome do Vendedor: ");
+	        venda.setNomeVendedor(scanner.nextLine());
 
-	 
-	    if (!verificarQuantidadeEmEstoque(venda)) {
-	        System.out.println("Venda cancelada devido à quantidade insuficiente em estoque.");
-	        return;
-	    }
+	        banco.RealizarVenda(venda);
 
-	  
-	    banco.RealizarVenda(venda);
-
-	    System.out.println("Venda realizada com sucesso!");
+	        System.out.print("Deseja realizar outra venda (S/N)? ");
+	        String resposta = scanner.nextLine().trim().toLowerCase();
+	        if (!resposta.equals("s")) {
+	            break; // Encerra o loop se o usuário não deseja continuar
+	        }
+	    } while (true); // Loop infinito até que o usuário escolha sair
 	}
 
-	public boolean verificarQuantidadeEmEstoque(Venda venda) {
-	    if (venda == null) {
-	        System.out.println("Venda inválida.");
-	        return false;
+	public void ConsultarVenda() {
+	    Scanner scanner = new Scanner(System.in);
+	    bancodedados bancoDados = new bancodedados();
+	    bancoDados.conectar();
+
+	    boolean continuar = true;
+
+	    while (continuar) {
+	        System.out.print("Digite o Número da Nota Fiscal: ");
+	        int numeroNotaFiscal = scanner.nextInt();
+
+	        Venda vendaEncontrada = bancoDados.consultarVendaPorNumeroNotaFiscal(numeroNotaFiscal);
+
+	        System.out.print("Deseja fazer outra pesquisa (S/N)? ");
+	        String resposta = scanner.next().trim().toLowerCase();
+
+	        if (!resposta.equals("s")) {
+	            continuar = false;
+	        }
 	    }
 
-	    if (venda.getQuantidade() <= 0) {
-	        System.out.println("Quantidade inválida. Venda cancelada.");
-	        return false;
-	    }
+	    bancoDados.fecharConexao();
+	}
+	public void TrocaOuDevolucao() {
+	    Scanner scanner = new Scanner(System.in);
+	    bancodedados bancoDados = new bancodedados();
+	    bancoDados.conectar();
 
-	    Produto produtoSelecionado = procurarProdutoPorCodigoBarras(venda.getCodigoBarras());
+	    System.out.print("Digite o Número da Nota Fiscal: ");
+	    int numeroNotaFiscal = scanner.nextInt();
+	    Venda vendaEncontrada = bancoDados.consultarVendaPorNumeroNotaFiscal(numeroNotaFiscal);
 
-	    if (produtoSelecionado == null) {
-	        System.out.println("Produto não encontrado no estoque.");
-	        return false;
-	    }
+	    if (vendaEncontrada != null) {
+	        System.out.println("Escolha uma opção:");
+	        System.out.println("1 - Troca");
+	        System.out.println("2 - Devolução");
+	        int escolhaTrocaDevolucao = scanner.nextInt();
 
-	    if (produtoSelecionado.getQuantidade() >= venda.getQuantidade()) {
-	        return true;
+	        if (escolhaTrocaDevolucao == 1) { // Verifica se a opção selecionada é "Troca"
+	            Troca trocaDevolucao = new Troca(null, null, escolhaTrocaDevolucao, escolhaTrocaDevolucao, null, null, escolhaTrocaDevolucao);
+
+	            scanner.nextLine();
+	            System.out.print("Nome do Vendedor: "); // Peça o nome do vendedor
+	            String nomeVendedor = scanner.nextLine();
+	            trocaDevolucao.setVendedor(nomeVendedor); // Defina o nome do vendedor
+
+	            System.out.print("Novo Produto: ");
+	            trocaDevolucao.setNovoNomeProduto(scanner.nextLine());
+
+	            System.out.print("Código de Barras: ");
+	            String codigoBarras = scanner.nextLine();
+	            trocaDevolucao.setCodigoBarras(codigoBarras);
+
+	            System.out.print("Nova Quantidade: ");
+	            int novaQuantidade = scanner.nextInt();
+	            trocaDevolucao.setNovaQuantidade(novaQuantidade);
+
+	            System.out.print("Novo Valor: ");
+	            trocaDevolucao.setValorTroca(scanner.nextDouble());
+	            scanner.nextLine();
+
+	            System.out.print("Data da Troca (YYYY-MM-DD): ");
+	            String dataTrocaStr = scanner.nextLine();
+	            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	            Date dataTroca;
+	            try {
+	                dataTroca = sdf.parse(dataTrocaStr);
+	                trocaDevolucao.setDataTroca(dataTroca);
+	            } catch (ParseException e) {
+	                e.printStackTrace();
+	                System.out.println("Formato de data inválido. Troca/Devolução cancelada.");
+	                return;
+	            }
+
+	            // Gere um número de nota troca automaticamente (pode ser baseado na hora atual, por exemplo)
+	            int notaTroca = bancoDados.gerarNumeroNotaTroca();
+
+	            trocaDevolucao.setNotaTroca(notaTroca);
+
+	            // Verifique se o nome corresponde ao código de barras antes de prosseguir com a troca
+	            boolean correspondenciaProduto = bancoDados.verificarCorrespondenciaProduto(codigoBarras, trocaDevolucao.getNovoNomeProduto());
+
+	            if (correspondenciaProduto) {
+	                // Chame o método para verificar a quantidade em estoque antes de registrar a troca
+	                if (bancoDados.verificarQuantidadeEmEstoque(codigoBarras, novaQuantidade)) {
+	                    bancoDados.registrarTrocaDevolucao(trocaDevolucao, vendaEncontrada);
+	                    
+	                    // Exclua a venda em questão
+	                    bancoDados.excluirVenda(numeroNotaFiscal, vendaEncontrada.getCodigoBarras(), vendaEncontrada.getQuantidade());
+	                    System.out.println("Venda excluída com sucesso.");
+	                } else {
+	                    System.out.println("Quantidade desejada não disponível em estoque. Troca cancelada.");
+	                }
+	            } else {
+	                System.out.println("O nome do produto não corresponde ao código de barras. Troca cancelada.");
+	            }
+	        } else if (escolhaTrocaDevolucao == 2) { // Verifica se a opção selecionada é "Devolução"
+	            System.out.println("Gostaria mesmo de excluir essa venda? (Sim/Não)");
+	            String confirmacao = scanner.next();
+
+	            if (confirmacao.equalsIgnoreCase("Sim")) {
+	                // Chame o método para excluir a venda
+	                bancoDados.excluirVenda(numeroNotaFiscal, vendaEncontrada.getCodigoBarras(), vendaEncontrada.getQuantidade());
+	                System.out.println("Venda excluída com sucesso.");
+	            } else {
+	                System.out.println("Venda não foi excluída.");
+	            }
+	        } else {
+	            System.out.println("Escolha inválida. Troca/Devolução cancelada.");
+	        }
 	    } else {
-	        System.out.println("Quantidade insuficiente em estoque.");
-	        return false;
+	        System.out.println("Venda com Número da Nota Fiscal " + numeroNotaFiscal + " não encontrada.");
 	    }
 	}
 }
