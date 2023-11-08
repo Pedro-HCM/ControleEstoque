@@ -19,6 +19,8 @@ No entanto, é importante destacar que, com a evolução da tecnologia e o acess
   <tr>
     <td align="center"><a href="https://github.com/Pedro-HCM"><img src="https://avatars.githubusercontent.com/u/92341351?v=4" width="100px;" alt=""/><br /><sub><b>Pedro Henrique</b></sub></a><br /> <a>62122976</a></td>
     <td align="center"><a href="https://github.com/joaoalves70/joaoalves70"><img src="https://avatars.githubusercontent.com/u/81262157?v=4" width="100px;" alt=""/><br /><sub><b>João Alves</b></sub></a><br /> <a>622120362</a></td>
+    <td align="center"><a href="https://github.com/wallacedev02"><img src="https://avatars.githubusercontent.com/u/103151846?v=4" width="100px;" alt=""/><br /><sub><b>Wallace Rodrigues</b></sub></a><br /> <a>622122112</a></td>
+      <td align="center"><a href="https://github.com/cesarHenriqueSM"><img src="https://avatars.githubusercontent.com/u/103151947?v=4" width="100px;" alt=""/><br /><sub><b>César Henrique</b></sub></a><br /> <a>622120352</a></td> 
   <tr>
     
 <table
