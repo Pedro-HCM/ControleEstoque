@@ -2,7 +2,6 @@ package trabalho;
 
 import java.awt.BorderLayout;
 import javax.swing.table.DefaultTableModel;
-import java.awt.EventQueue;
 import javax.swing.*;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -13,19 +12,19 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import java.sql.*;
 import java.sql.Connection;
 
 public class Telas extends JFrame {
-	
-	
-	private List<Produto> estoque = new ArrayList<>();
-    private static bancodedados banco = new bancodedados();
+    
+    
 
+    private List<Produto> estoque = new ArrayList<>();
+    private static bancodedados banco = new bancodedados();
+    
+ 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -39,7 +38,7 @@ public class Telas extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 300);
         setLocationRelativeTo(null);
-        setLayout(new GridLayout(10, 1, 10, 10)); // Layout de grade com 10 linhas, 1 coluna
+        setLayout(new GridLayout(11, 1, 10, 10)); // Agora com 11 linhas
 
         JButton btnAdicionarProduto = criarBotao("Adicionar Produto");
         JButton btnAtualizarProduto = criarBotao("Atualizar Produto");
@@ -50,6 +49,7 @@ public class Telas extends JFrame {
         JButton btnRealizarVenda = criarBotao("Realizar Venda");
         JButton btnDevolucaoTroca = criarBotao("Devolução ou Troca");
         JButton btnConsultarVendaNF = criarBotao("Consultar Venda por NF");
+        JButton btnEstoque = criarBotao("Estoque"); // Novo botão Estoque
         JButton btnSair = criarBotao("Sair");
 
         add(btnAdicionarProduto);
@@ -61,11 +61,13 @@ public class Telas extends JFrame {
         add(btnRealizarVenda);
         add(btnDevolucaoTroca);
         add(btnConsultarVendaNF);
+        add(btnEstoque); // Adicionando o botão Estoque
         add(btnSair);
 
         banco.conectar(); // Conectar ao banco de dados ao iniciar a aplicação
     }
 
+   
     private JButton criarBotao(String texto) {
         JButton botao = new JButton(texto);
         botao.setAlignmentX(CENTER_ALIGNMENT);
@@ -86,28 +88,31 @@ public class Telas extends JFrame {
                 abrirTelaAdicionarProduto();
                 break;
             case "Atualizar Produto":
-            	abrirTelaProcurarProdutoParaAtualizar(	);
+                abrirTelaProcurarProdutoParaAtualizar();
                 break;
             case "Remover Produto":
-            	removerProdutoPorNome();
+                removerProdutoPorNome();
                 break;
             case "Procurar Produto":
-            	abrirTelaProcurarProduto();
+                abrirTelaProcurarProduto();
                 break;
             case "Calcular Valor Total do Estoque":
-            	calcularValorTotalEstoque();
+                abrirTelaCalculoEstoque();
                 break;
             case "Gerar Relatório de Produtos Próximos ao Vencimento":
-            	gerarRelatorioVencimento();
+                gerarRelatorioVencimento();
                 break;
             case "Realizar Venda":
-                // Implemente a lógica para a opção "Realizar Venda"
+                new AbrirTelaRealizarVenda();
                 break;
+            case "Estoque":
+                abrirTelaEstoque();
+                break; 
             case "Devolução ou Troca":
-                // Implemente a lógica para a opção "Devolução ou Troca"
+                // Adicione a ação para "Devolução ou Troca"
                 break;
             case "Consultar Venda por NF":
-                // Implemente a lógica para a opção "Consultar Venda por NF"
+                abrirTelaConsultarVendaPorNotaFiscal();
                 break;
             case "Sair":
                 System.out.println("Saindo do programa. Até mais!");
@@ -116,8 +121,10 @@ public class Telas extends JFrame {
             default:
                 System.out.println("Opção inválida. Tente novamente.");
         }
-        
     }
+
+   
+  
     
     private void abrirTelaProcurarProduto() {
         JFrame frame = new JFrame("Procurar Produto por Nome");
@@ -229,17 +236,19 @@ public class Telas extends JFrame {
     
     private static void exibirTelaAtualizarProduto(Produto produto) {
         JFrame frame = new JFrame("Atualizar Produto");
-        frame.setSize(400, 300);
+        frame.setSize(400, 350); // Aumentei a altura para acomodar o novo JLabel
         frame.setLocationRelativeTo(null);
 
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(7, 2, 5, 5));
+        panel.setLayout(new GridLayout(8, 2, 5, 5));
 
         JTextField txtNovoNome = new JTextField(produto.getNome());
         JTextField txtNovoCodigo = new JTextField(produto.getCodigoDeBarras());
         JTextField txtNovaQuantidade = new JTextField(String.valueOf(produto.getQuantidade()));
         JTextField txtNovoPreco = new JTextField(String.valueOf(produto.getPrecoUnitario()));
         JTextField txtNovaDataValidade = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(produto.getDataDeValidade()));
+
+        JLabel lblAtualizacao = new JLabel(); // JLabel para exibir as informações atualizadas
 
         JButton btnSalvar = new JButton("Salvar");
         btnSalvar.addActionListener(new ActionListener() {
@@ -248,34 +257,48 @@ public class Telas extends JFrame {
                 // Lógica para atualizar o produto
                 try {
                     String novoNome = txtNovoNome.getText().trim();
-                    String novoCodigo = txtNovoCodigo.getText().trim();
+                    String novoCodigoDeBarras = txtNovoCodigo.getText().trim();
                     int novaQuantidade = Integer.parseInt(txtNovaQuantidade.getText().trim());
                     double novoPreco = Double.parseDouble(txtNovoPreco.getText().trim());
 
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                     Date novaDataValidade = dateFormat.parse(txtNovaDataValidade.getText().trim());
 
-                    // Verificar se o código de barras já existe (exceto para o próprio produto)
-                    if (!produto.getCodigoDeBarras().equals(novoCodigo) && banco.verificarCodigoBarrasExistente(novoCodigo)) {
-                        JOptionPane.showMessageDialog(null, "Código de barras já existe. Tente novamente com um código diferente.");
-                        return;
-                    }
+                    // Desativar o modo de confirmação automática
+                    banco.setAutoCommit(false);
 
                     // Atualizar os atributos do produto
                     produto.setNome(novoNome);
-                    produto.setCodigoDeBarras(novoCodigo);
+                    produto.setCodigoDeBarras(novoCodigoDeBarras);
                     produto.setQuantidade(novaQuantidade);
                     produto.setPrecoUnitario(novoPreco);
                     produto.setDataDeValidade(novaDataValidade);
 
                     // Atualizar no banco de dados
                     banco.atualizarProduto(produto);
+
+                    // Confirmar a transação
                     banco.commit();
-                    banco.setAutoCommit(true);
+                    
+                    // Exibir informações atualizadas no JLabel
+                    String infoAtualizadas = String.format("Produto Atualizado:\nNome: %s\nCódigo de Barras: %s\nQuantidade: %d\nPreço: %.2f\nData de Validade: %s",
+                            produto.getNome(), produto.getCodigoDeBarras(), produto.getQuantidade(), produto.getPrecoUnitario(), dateFormat.format(produto.getDataDeValidade()));
+                    lblAtualizacao.setText(infoAtualizadas);
+
                     JOptionPane.showMessageDialog(null, "Produto atualizado com sucesso!");
                 } catch (SQLException | ParseException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(null, "Erro ao atualizar produto.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    
+                    // Reverter a transação em caso de exceção
+                    banco.rollback();
+                } finally {
+                    try {
+                        // Ativar o modo de confirmação automática novamente
+                        banco.setAutoCommit(true);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
                 }
 
                 frame.dispose();
@@ -294,11 +317,60 @@ public class Telas extends JFrame {
         panel.add(txtNovaDataValidade);
         panel.add(new JLabel());
         panel.add(btnSalvar);
+        
+        // Adiciona o JLabel para exibir as informações atualizadas
+        panel.add(new JLabel("Informações Atualizadas:"));
+        panel.add(lblAtualizacao);
 
         frame.add(panel);
         frame.setVisible(true);
     }
-    
+    private void abrirTelaCalculoEstoque() {
+        JFrame frame = new JFrame("Calcular Valor Total do Estoque");
+        frame.setSize(300, 200);
+        frame.setLocationRelativeTo(null);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+
+        JTextArea resultadoTextArea = new JTextArea();
+        resultadoTextArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(resultadoTextArea);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton calcularButton = new JButton("Calcular");
+        calcularButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    Map<String, Double> valoresIndividuais = banco.calcularValoresIndividuaisEstoqueComTotal();
+
+                    // Exibe os resultados no JTextArea
+                    resultadoTextArea.setText("Valores Individuais do Estoque:\n");
+                    
+                    // Mostra valores individuais
+                    for (Map.Entry<String, Double> entry : valoresIndividuais.entrySet()) {
+                        if (!entry.getKey().equals("Total")) {
+                            resultadoTextArea.append(entry.getKey() + ": " + entry.getValue() + "\n");
+                        }
+                    }
+
+                    // Mostra o valor total por último
+                    Double valorTotal = valoresIndividuais.get("Total");
+                    if (valorTotal != null) {
+                        resultadoTextArea.append("Total: " + valorTotal);
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        panel.add(calcularButton, BorderLayout.SOUTH);
+
+        frame.add(panel);
+        frame.setVisible(true);
+    }
+
     private void abrirTelaAdicionarProduto() {
         JFrame frame = new JFrame("Adicionar Produto");
         frame.setSize(400, 300);
@@ -442,54 +514,7 @@ public class Telas extends JFrame {
     
     private Connection connection;	
     
-    private void calcularValorTotalEstoque() {
-        try {
-        	try {
-                this.connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/estoque", "root", "21798213");
-            } catch (SQLException e) {
-                // Lide com erros de conexão aqui
-                e.printStackTrace();
-            }
-            Object[][] data = obterDadosEstoque();
-            String[] colunas = {"ID", "Nome do Produto", "Quantidade", "Preço Unitário", "Valor Total"};
-
-            JTable table = new JTable(data, colunas);
-            JScrollPane scrollPane = new JScrollPane(table);
-
-            double valorTotal = banco.calcularValorTotalEstoque();
-            JOptionPane.showMessageDialog(null, "Valor total do estoque: R$" + valorTotal, "Valor Total do Estoque", JOptionPane.INFORMATION_MESSAGE);
-            JOptionPane.showMessageDialog(null, scrollPane, "Detalhes do Estoque", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Erro ao calcular o valor total do estoque: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private Object[][] obterDadosEstoque() throws SQLException {
-        String sql = "SELECT ID, Nome, Quantidade, PrecoUnitario, (PrecoUnitario * Quantidade) AS ValorTotal FROM Produto";
-        PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        ResultSet resultSet = statement.executeQuery();
-
-        // Obtém o número de linhas no ResultSet
-        resultSet.last();
-        int rowCount = resultSet.getRow();
-        resultSet.beforeFirst();
-
-        Object[][] data = new Object[rowCount][5]; // 5 colunas: ID, NomeProduto, Quantidade, PrecoUnitario, ValorTotal
-
-        int row = 0;
-        while (resultSet.next()) {
-            data[row][0] = resultSet.getInt("ID");
-            data[row][1] = resultSet.getString("Nome");
-            data[row][2] = resultSet.getInt("Quantidade");
-            data[row][3] = resultSet.getDouble("PrecoUnitario");
-            data[row][4] = resultSet.getDouble("ValorTotal");
-            row++;
-        }
-
-        statement.close();
-        return data;
-    }
+    
     
     private void gerarRelatorioVencimento() {
         try {
@@ -532,5 +557,202 @@ public class Telas extends JFrame {
             JOptionPane.showMessageDialog(null, "Erro ao gerar relatório de produtos próximos ao vencimento: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    
+    private void abrirTelaConsultarVendaPorNotaFiscal() {
+        JFrame frame = new JFrame("Consultar Venda por Número de Nota Fiscal");
+        frame.setSize(200, 180);
+        frame.setLocationRelativeTo(null);
+        frame.setLayout(new BorderLayout());
+
+        JLabel label = new JLabel("Digite o número da nota fiscal:");
+        frame.add(label, BorderLayout.NORTH);
+
+        JTextField textField = new JTextField();
+        JButton btnConsultar = new JButton("Consultar");
+
+        btnConsultar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                consultarVendaPorNotaFiscal(textField.getText());
+                frame.dispose();
+            }
+        });
+
+        frame.add(textField, BorderLayout.CENTER);
+        frame.add(btnConsultar, BorderLayout.SOUTH);
+
+        frame.setVisible(true);
+    }
+
+    private void consultarVendaPorNotaFiscal(String numeroNotaFiscal) {
+        try {
+            int numeroNota = Integer.parseInt(numeroNotaFiscal);
+            Venda vendaEncontrada = banco.consultarVendaPorNumeroNotaFiscal(numeroNota);
+
+            if (vendaEncontrada != null) {
+                // Exibir as informações em uma nova janela
+                new TelaConsultaVenda(vendaEncontrada);
+            } else {
+                JOptionPane.showMessageDialog(null, "Venda não encontrada para o Número da Nota Fiscal informado.", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Erro ao consultar venda. Verifique os dados inseridos.", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private class TelaConsultaVenda {
+        private JFrame frame;
+
+        public TelaConsultaVenda(Venda venda) {
+            frame = new JFrame("Detalhes da Venda");
+            frame.setSize(400, 200);
+            frame.setLocationRelativeTo(null);
+            frame.setLayout(new GridLayout(5, 2));
+
+            adicionarInformacao("Produto:", venda.getNomeProduto());
+            adicionarInformacao("Quantidade:", String.valueOf(venda.getQuantidade()));
+            adicionarInformacao("Valor de Venda:", String.valueOf(venda.getValorVenda()));
+            adicionarInformacao("Data da Venda:", new SimpleDateFormat("yyyy-MM-dd").format(venda.getDataVenda()));
+            adicionarInformacao("Nome do Vendedor:", venda.getNomeVendedor());
+
+            frame.setVisible(true);
+        }
+
+        private void adicionarInformacao(String rotulo, String valor) {
+            frame.add(new JLabel(rotulo));
+            frame.add(new JLabel(valor));
+        }
+    }
+   public class AbrirTelaRealizarVenda implements ActionListener {
+
+        private JFrame frame;
+        private JTextField txtNomeProduto;
+        private JTextField txtCodigoBarras;
+        private JTextField txtQuantidade;
+        private JTextField txtValorVenda;
+        private JTextField txtDataVenda;
+        private JTextField txtNomeVendedor;
+        private bancodedados banco;
+
+        public AbrirTelaRealizarVenda() {
+            frame = new JFrame("Realizar Venda");
+            frame.setSize(400, 300);
+            frame.setLocationRelativeTo(null);
+
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(7, 2, 5, 5));
+
+            txtNomeProduto = new JTextField();
+            txtCodigoBarras = new JTextField();
+            txtQuantidade = new JTextField();
+            txtValorVenda = new JTextField();
+            txtDataVenda = new JTextField();
+            txtNomeVendedor = new JTextField();
+
+            JButton btnRealizarVenda = new JButton("Realizar Venda");
+            btnRealizarVenda.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    realizarVenda();
+                }
+            });
+
+            panel.add(new JLabel("Nome do Produto:"));
+            panel.add(txtNomeProduto);
+            panel.add(new JLabel("Código de Barras:"));
+            panel.add(txtCodigoBarras);
+            panel.add(new JLabel("Quantidade:"));
+            panel.add(txtQuantidade);
+            panel.add(new JLabel("Valor da Venda:"));
+            panel.add(txtValorVenda);
+            panel.add(new JLabel("Data da Venda (YYYY-MM-DD):"));
+            panel.add(txtDataVenda);
+            panel.add(new JLabel("Nome do Vendedor:"));
+            panel.add(txtNomeVendedor);
+            panel.add(new JLabel());
+            panel.add(btnRealizarVenda);
+
+            frame.add(panel);
+            frame.setVisible(true);
+
+            banco = new bancodedados();
+            banco.conectar();
+        }
+
+        private void realizarVenda() {
+            Venda venda = new Venda();
+
+            venda.setNomeProduto(txtNomeProduto.getText().trim());
+            String codigoBarras = txtCodigoBarras.getText().trim();
+
+            // Verificar se o produto existe e corresponde ao código de barras
+            if (!banco.verificarCorrespondenciaProduto(codigoBarras, venda.getNomeProduto())) {
+                JOptionPane.showMessageDialog(null, "O nome do produto não corresponde ao código de barras. Venda cancelada.");
+                return;
+            }
+
+            venda.setCodigoBarras(codigoBarras);
+
+            venda.setQuantidade(Integer.parseInt(txtQuantidade.getText().trim()));
+            venda.setValorVenda(Double.parseDouble(txtValorVenda.getText().trim()));
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+                Date dataVenda = sdf.parse(txtDataVenda.getText().trim());
+                venda.setDataVenda(dataVenda);
+            } catch (ParseException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Formato de data inválido. Venda cancelada.");
+                return;
+            }
+
+            venda.setNomeVendedor(txtNomeVendedor.getText().trim());
+
+            // Verificar quantidade em estoque
+            int quantidadeEmEstoque = banco.consultarQuantidadeEmEstoque(codigoBarras);
+
+            if (quantidadeEmEstoque >= venda.getQuantidade()) {
+                // Se a quantidade em estoque for suficiente, realizar a venda
+                banco.RealizarVenda(venda);
+
+                // Obter o número da nota fiscal recém-gerado
+                int numeroNotaFiscalGerado = banco.obterUltimoNumeroNotaFiscal();
+
+                JOptionPane.showMessageDialog(null, "Venda realizada com sucesso!\nNúmero da Nota Fiscal: " + numeroNotaFiscalGerado);
+                limparCampos();
+                mostrarTela();
+            } else {
+                // Quantidade em estoque insuficiente
+                JOptionPane.showMessageDialog(null, "Quantidade insuficiente em estoque. Venda cancelada.");
+            }
+
+        }
+
+        private void limparCampos() {
+            txtNomeProduto.setText("");
+            txtCodigoBarras.setText("");
+            txtQuantidade.setText("");
+            txtValorVenda.setText("");
+            txtDataVenda.setText("");
+            txtNomeVendedor.setText("");
+        }
+
+        public void mostrarTela() {
+            frame.setVisible(true);
+        }
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+}
+   private void abrirTelaEstoque() {
+    banco.BuscarEstoqueCompleto();
+}
+
+   }
 
 }
