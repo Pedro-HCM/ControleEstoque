@@ -3,7 +3,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class Venda {
-    
 
     public String produto;
     public String codigo_de_barras;
@@ -11,7 +10,13 @@ public class Venda {
     public double valor_venda;
     public Date data_da_venda;
     public String nome_vendedor;
+    private int numeroNotaFiscal;
 
+    // Construtor padrão sem argumentos
+    public Venda() {
+    }
+
+    // Construtor com argumentos
     public Venda(String codigo_de_barras, String produto, int quantidade, double valor_venda, Date data_da_venda, String nome_vendedor) {
         this.produto = produto;
         this.codigo_de_barras = codigo_de_barras;
@@ -20,9 +25,6 @@ public class Venda {
         this.data_da_venda = data_da_venda;
         this.nome_vendedor = nome_vendedor;
     }
-
-    public Venda() {
-	}
 
     public String getNomeProduto() {
         return produto;
@@ -72,17 +74,8 @@ public class Venda {
         this.nome_vendedor = nomeVendedor;
     }
 
-	public Calendar getDataDevolucao() {
-	
-		return null;
-	}
-	
-	private int numeroNotaFiscal;
-
-    public Venda(String codigo_de_barras, String produto, int quantidade, double valor_venda, Date data_da_venda, String nome_vendedor, int numeroNotaFiscal) {
-
-        this.numeroNotaFiscal = numeroNotaFiscal;
-
+    public Calendar getDataDevolucao() {
+        return null;
     }
 
     public int getNumeroNotaFiscal() {
@@ -92,6 +85,4 @@ public class Venda {
     public void setNumeroNotaFiscal(int numeroNotaFiscal) {
         this.numeroNotaFiscal = numeroNotaFiscal;
     }
-
-    
 }
