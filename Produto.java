@@ -1,4 +1,4 @@
-package estoque_management;
+package atividade;
 import java.util.Date;
 
 public class Produto {
