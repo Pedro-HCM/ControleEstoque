@@ -1,26 +1,29 @@
-package estoque_management;
-
+package atividade;
+import java.awt.BorderLayout;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 
 public class bancodedados {
     private Connection connection;
-
+    private int proximoNumeroNotaTroca = 1;
     public void conectar() {
-        String jdbcUrl = "jdbc:mysql://localhost:3306/estoque";
+        String jdbcUrl = "jdbc:mysql://localhost:3306/estoque2";
         String user = "root";
         String password = "635241";
-        
-        
 
         try {
             connection = DriverManager.getConnection(jdbcUrl, user, password);
@@ -53,8 +56,7 @@ public class bancodedados {
         }
         
     }
-
-  
+    
     public void inserirProduto(Produto produto) {
         try {
           
@@ -150,8 +152,6 @@ public class bancodedados {
 
     public List<Produto> gerarRelatorioVencimento() throws SQLException {
         List<Produto> produtosProximosVencimento = new ArrayList<>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
         Date dataAtual = new Date();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(dataAtual);
@@ -631,6 +631,150 @@ public class bancodedados {
 		        }
 		    }
 		}
+	public void mostrarTabelaVendasCompleta() {
+	    try {
+	        String sql = "SELECT codigo_de_barras, produto, quantidade, valor_venda, data_da_venda, nome_vendedor FROM vendas";
+	        PreparedStatement statement = connection.prepareStatement(sql);
+	        ResultSet resultSet = statement.executeQuery();
+
+	        // Criar um modelo de tabela para armazenar os dados
+	        DefaultTableModel tableModel = new DefaultTableModel();
+
+	        // Adicionar colunas ao modelo
+	        tableModel.addColumn("Código de Barras");
+	        tableModel.addColumn("Produto");
+	        tableModel.addColumn("Quantidade");
+	        tableModel.addColumn("Valor de Venda");
+	        tableModel.addColumn("Data da Venda");
+	        tableModel.addColumn("Nome do Vendedor");
+
+	        // Adicionar linhas ao modelo com os dados do banco
+	        while (resultSet.next()) {
+	            String codigoBarras = resultSet.getString("codigo_de_barras");
+	            String produto = resultSet.getString("produto");
+	            int quantidade = resultSet.getInt("quantidade");
+	            double valorVenda = resultSet.getDouble("valor_venda");
+	            Date dataVenda = resultSet.getDate("data_da_venda");
+	            String nomeVendedor = resultSet.getString("nome_vendedor");
+
+	            tableModel.addRow(new Object[]{codigoBarras, produto, quantidade, valorVenda, dataVenda, nomeVendedor});
+	        }
+
+	        // Criar a tabela e exibir em um JFrame
+	        JTable table = new JTable(tableModel);
+	        JScrollPane scrollPane = new JScrollPane(table);
+
+	        JFrame frame = new JFrame("Vendas Completo");
+	        frame.setSize(800, 400);
+	        frame.setLocationRelativeTo(null);
+	        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+	        frame.add(scrollPane, BorderLayout.CENTER);
+
+	        frame.setVisible(true);
+
+	    } catch (SQLException e) {
+	        System.err.println("Erro ao buscar as vendas completas: " + e.getMessage());
+	    }
+	}
+	public void mostrarTabelaTrocasCompleta() {
+	    try {
+	        String sql = "SELECT codigo_de_barras, nome, quantidade, novo_valor, data_devolucao, vendedor, nota_troca FROM trocas";
+
+	        PreparedStatement statement = connection.prepareStatement(sql);
+	        ResultSet resultSet = statement.executeQuery();
+
+	        // Criar um modelo de tabela para armazenar os dados
+	        DefaultTableModel tableModel = new DefaultTableModel();
+
+	        // Adicionar colunas ao modelo
+	        tableModel.addColumn("Código de Barras");
+	        tableModel.addColumn("Nome");
+	        tableModel.addColumn("Quantidade");
+	        tableModel.addColumn("Valor de Troca");
+	        tableModel.addColumn("Data da Troca");
+	        tableModel.addColumn("Nome do Vendedor");
+	        tableModel.addColumn("Nota de Troca");
+
+	        // Adicionar linhas ao modelo com os dados do banco
+	        while (resultSet.next()) {
+	            String codigoBarras = resultSet.getString("codigo_de_barras");
+	            String nome = resultSet.getString("nome");
+	            int quantidade = resultSet.getInt("quantidade");
+	            double valorTroca = resultSet.getDouble("novo_valor"); // Se a coluna é 'novo_valor'
+	            Date dataTroca = resultSet.getDate("data_devolucao");
+	            String nomeVendedor = resultSet.getString("vendedor");
+	            int notaTroca = resultSet.getInt("nota_troca");
+
+	            tableModel.addRow(new Object[]{codigoBarras, nome, quantidade, valorTroca, dataTroca, nomeVendedor, notaTroca});
+	        }
+
+	        // Criar a tabela e exibir em um JFrame
+	        JTable table = new JTable(tableModel);
+	        JScrollPane scrollPane = new JScrollPane(table);
+
+	        JFrame frame = new JFrame("Trocas Completo");
+	        frame.setSize(800, 400);
+	        frame.setLocationRelativeTo(null);
+	        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+	        frame.add(scrollPane, BorderLayout.CENTER);
+
+	        frame.setVisible(true);
+
+	    } catch (SQLException e) {
+	        System.err.println("Erro ao buscar as trocas completas: " + e.getMessage());
+	    }
+	}
+
+	public void mostrarTabelaDevolucoesCompleta() {
+	    try {
+	        String sql = "SELECT nome, codigo_de_barras, quantidade, valor_devolucao, data_devolucao, vendedor, nota_devolucao FROM devolucoes";
+	        PreparedStatement statement = connection.prepareStatement(sql);
+	        ResultSet resultSet = statement.executeQuery();
+
+	        // Criar um modelo de tabela para armazenar os dados
+	        DefaultTableModel tableModel = new DefaultTableModel();
+
+	        // Adicionar colunas ao modelo
+	        tableModel.addColumn("Nome");
+	        tableModel.addColumn("Código de Barras");
+	        tableModel.addColumn("Quantidade");
+	        tableModel.addColumn("Valor de Devolução");
+	        tableModel.addColumn("Data de Devolução");
+	        tableModel.addColumn("Vendedor");
+	        tableModel.addColumn("Nota de Devolução");
+
+	        // Adicionar linhas ao modelo com os dados do banco
+	        while (resultSet.next()) {
+	            String nome = resultSet.getString("nome");
+	            String codigoBarras = resultSet.getString("codigo_de_barras");
+	            int quantidade = resultSet.getInt("quantidade");
+	            double valorDevolucao = resultSet.getDouble("valor_devolucao");
+	            Date dataDevolucao = resultSet.getDate("data_devolucao");
+	            String vendedor = resultSet.getString("vendedor");
+	            int notaDevolucao = resultSet.getInt("nota_devolucao");
+
+	            tableModel.addRow(new Object[]{nome, codigoBarras, quantidade, valorDevolucao, dataDevolucao, vendedor, notaDevolucao});
+	        }
+
+	        // Criar a tabela e exibir em um JFrame
+	        JTable table = new JTable(tableModel);
+	        JScrollPane scrollPane = new JScrollPane(table);
+
+	        JFrame frame = new JFrame("Devoluções Completo");
+	        frame.setSize(800, 400);
+	        frame.setLocationRelativeTo(null);
+	        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+	        frame.add(scrollPane, BorderLayout.CENTER);
+
+	        frame.setVisible(true);
+
+	    } catch (SQLException e) {
+	        System.err.println("Erro ao buscar as devoluções completas: " + e.getMessage());
+	    }
+	}
 	 }
 
 
