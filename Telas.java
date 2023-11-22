@@ -17,14 +17,17 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.sql.Connection;
 
+
+
 public class Telas extends JFrame {
     
     
 
     private List<Produto> estoque = new ArrayList<>();
     private static bancodedados banco = new bancodedados();
-    
- 
+    Venda venda = new Venda();
+    Venda vendaOriginal;
+  
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -47,7 +50,8 @@ public class Telas extends JFrame {
         JButton btnCalcularValorEstoque = criarBotao("Calcular Valor Total do Estoque");
         JButton btnRelatorioVencimento = criarBotao("Gerar Relatório de Produtos Próximos ao Vencimento");
         JButton btnRealizarVenda = criarBotao("Realizar Venda");
-        JButton btnDevolucaoTroca = criarBotao("Devolução ou Troca");
+        JButton btnTroca = criarBotao("Troca");
+        JButton btnDevolucao = criarBotao("Devolução");
         JButton btnConsultarVendaNF = criarBotao("Consultar Venda por NF");
         JButton btnEstoque = criarBotao("Estoque"); // Novo botão Estoque
         JButton btnSair = criarBotao("Sair");
@@ -59,7 +63,8 @@ public class Telas extends JFrame {
         add(btnCalcularValorEstoque);
         add(btnRelatorioVencimento);
         add(btnRealizarVenda);
-        add(btnDevolucaoTroca);
+        add(btnTroca);
+        add(btnDevolucao);
         add(btnConsultarVendaNF);
         add(btnEstoque); // Adicionando o botão Estoque
         add(btnSair);
@@ -104,12 +109,15 @@ public class Telas extends JFrame {
                 break;
             case "Realizar Venda":
                 new AbrirTelaRealizarVenda();
-                break;
+                break;  
             case "Estoque":
                 abrirTelaEstoque();
                 break; 
-            case "Devolução ou Troca":
-                // Adicione a ação para "Devolução ou Troca"
+            case "Troca":
+            	abrirTelaTroca();
+                break;
+            case "Devolução":
+            	abrirTelaDevolucao();
                 break;
             case "Consultar Venda por NF":
                 abrirTelaConsultarVendaPorNotaFiscal();
@@ -122,9 +130,182 @@ public class Telas extends JFrame {
                 System.out.println("Opção inválida. Tente novamente.");
         }
     }
+    public void abrirTelaDevolucao() {
+        // Solicitar o número da nota fiscal ao usuário
+        String inputNotaFiscal = JOptionPane.showInputDialog("Digite o número da nota fiscal:");
+
+        // Verificar se o usuário cancelou a entrada
+        if (inputNotaFiscal == null) {
+            System.out.println("Operação cancelada pelo usuário.");
+            return;
+        }
+
+        try {
+            // Converter a entrada para um número inteiro
+            int numeroNotaFiscal = Integer.parseInt(inputNotaFiscal);
+
+            // Iniciar uma transação para garantir que todas as operações sejam executadas ou revertidas
+            banco.conectar();
+
+            // Verificar se a venda original existe (não precisa consultar novamente)
+            Venda vendaOriginal = banco.consultarVendaPorNumeroNotaFiscal(numeroNotaFiscal);
+
+            // Verificar se a venda original existe
+            if (vendaOriginal != null) {
+                // Exibir os dados da venda em uma interface gráfica
+                exibirDadosVenda(vendaOriginal);
+
+                // Solicitar confirmação para devolução
+                int resposta = JOptionPane.showConfirmDialog(null, "Deseja realmente devolver esta venda?", "Confirmação", JOptionPane.YES_NO_OPTION);
+
+                if (resposta == JOptionPane.YES_OPTION) {
+                    // Registrar a devolução no banco de dados
+                    banco.registrarDevolucao(numeroNotaFiscal);
+
+                    // Confirmar a transação
+                    banco.commit();
+
+                    // Exemplo: Exibir uma mensagem após a devolução
+                    JOptionPane.showMessageDialog(null, "Devolução registrada com sucesso!");
+
+                    // Restante do código...
+                    // Pode incluir outras ações, atualizações de interface, etc.
+                } else {
+                    System.out.println("Devolução cancelada pelo usuário.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Venda não encontrada. Verifique o número da nota fiscal.");
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Número de nota fiscal inválido. Digite um número válido.");
+        }
+    }
+
+    private void exibirDadosVenda(Venda venda) {
+        // Criar uma mensagem formatada com os dados da venda
+        String mensagem = "Dados da venda:\n" +
+                "Produto: " + venda.getNomeProduto() + "\n" +
+                "Quantidade: " + venda.getQuantidade() + "\n" +
+                "Valor de Venda: " + venda.getValorVenda() + "\n" +
+                "Data da Venda: " + venda.getDataVenda() + "\n" +
+                "Nome do Vendedor: " + venda.getNomeVendedor();
+
+        // Exibir a mensagem em uma JOptionPane
+        JOptionPane.showMessageDialog(null, mensagem, "Dados da Venda", JOptionPane.INFORMATION_MESSAGE);
+    }
+
 
    
-  
+    private void abrirTelaTroca() {
+        JFrame frame = new JFrame("Troca");
+        frame.setSize(400, 300);
+        frame.setLocationRelativeTo(null);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(4, 2, 5, 5));
+
+        JTextField txtNotaFiscal = new JTextField();
+        JButton btnConsultar = new JButton("Consultar");
+        JButton btnProximo = new JButton("Próximo");
+
+        // Componentes para a segunda tela de troca
+        JTextField txtNomeVendedor = new JTextField();
+        JTextField txtNovoProduto = new JTextField();
+        JTextField txtCodigoBarras = new JTextField();
+        JTextField txtNovaQuantidade = new JTextField();
+        JTextField txtValorTroca = new JTextField();
+        JTextField txtDataTroca = new JTextField();
+
+        // Adiciona os componentes da primeira tela
+        panel.add(new JLabel("Nota Fiscal da venda:"));
+        panel.add(txtNotaFiscal);
+        panel.add(new JLabel());
+        panel.add(btnConsultar);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        btnConsultar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Solicita a nota fiscal da venda
+                int numeroNotaFiscal = Integer.parseInt(txtNotaFiscal.getText());
+
+                // Obtém a venda original do banco de dados
+                vendaOriginal = banco.consultarVendaPorNumeroNotaFiscal(numeroNotaFiscal);
+
+                // Verifica se a venda original existe
+                if (vendaOriginal != null) {
+                    // Remove os componentes da primeira tela
+                    panel.removeAll();
+
+                    // Adiciona os componentes da segunda tela
+                    panel.setLayout(new GridLayout(7, 2, 5, 5));
+                    panel.add(new JLabel("Nome do vendedor:"));
+                    panel.add(txtNomeVendedor);
+                    panel.add(new JLabel("Novo produto:"));
+                    panel.add(txtNovoProduto);
+                    panel.add(new JLabel("Código de barras:"));
+                    panel.add(txtCodigoBarras);
+                    panel.add(new JLabel("Nova quantidade:"));
+                    panel.add(txtNovaQuantidade);
+                    panel.add(new JLabel("Valor da troca:"));
+                    panel.add(txtValorTroca);
+                    panel.add(new JLabel("Data da troca (yyyy-MM-dd):"));
+                    panel.add(txtDataTroca);
+                    panel.add(new JLabel());
+                    panel.add(btnProximo);
+
+                    // Exibe os detalhes da venda em um JOptionPane
+                    JOptionPane.showMessageDialog(frame, "Detalhes da Venda:\n" +
+                            "Nome do Produto: " + vendaOriginal.getNomeProduto() + "\n" +
+                            "Código de Barras: " + vendaOriginal.getCodigoBarras() + "\n" +
+                            "Quantidade: " + vendaOriginal.getQuantidade() + "\n" +
+                            "Valor da Venda: " + vendaOriginal.getValorVenda() + "\n" +
+                            "Data da Venda: " + vendaOriginal.getDataVenda());
+
+                    frame.revalidate();
+                    frame.repaint();
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Venda não encontrada. Verifique o número da nota fiscal.");
+                }
+            }
+        });
+    
+
+        btnProximo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Obtém os dados inseridos
+                String nomeVendedor = txtNomeVendedor.getText();
+                String novoProduto = txtNovoProduto.getText();
+                String codigoBarras = txtCodigoBarras.getText();
+                int novaQuantidade = Integer.parseInt(txtNovaQuantidade.getText());
+                double valorTroca = Double.parseDouble(txtValorTroca.getText());
+                Date dataTroca = null; // Aqui você precisa converter a string para um objeto Date
+
+                // Chama o método para registrar a troca no banco de dados
+                banco.registrarTroca(
+                    new Troca(
+                        novoProduto,       // nome
+                        codigoBarras,      // codigo_de_barras
+                        novaQuantidade,    // quantidade
+                        valorTroca,        // novo_valor
+                        dataTroca,         // data_devolucao
+                        nomeVendedor,      // vendedor
+                        0                  // nota_troca
+                    ),
+                    vendaOriginal
+                );
+
+                // Chama o método para excluir a venda do banco de dados
+                banco.excluirVenda(vendaOriginal.getNumeroNotaFiscal(), vendaOriginal.getCodigoBarras(), vendaOriginal.getQuantidade());
+
+                frame.dispose();
+            }
+        });
+    }
+
     
     private void abrirTelaProcurarProduto() {
         JFrame frame = new JFrame("Procurar Produto por Nome");
@@ -682,7 +863,7 @@ public class Telas extends JFrame {
         }
 
         private void realizarVenda() {
-            Venda venda = new Venda();
+            
 
             venda.setNomeProduto(txtNomeProduto.getText().trim());
             String codigoBarras = txtCodigoBarras.getText().trim();
@@ -752,7 +933,4 @@ public class Telas extends JFrame {
    private void abrirTelaEstoque() {
     banco.BuscarEstoqueCompleto();
 }
-
-   }
-
 }
