@@ -1,4 +1,4 @@
-package estoque_management;
+package atividade;
 import java.util.Calendar;
 import java.util.Date;
 
