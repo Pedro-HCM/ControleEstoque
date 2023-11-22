@@ -1,4 +1,4 @@
-package trabalho;
+package atividade;
 
 import java.awt.BorderLayout;
 import javax.swing.table.DefaultTableModel;
@@ -9,39 +9,40 @@ import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import java.sql.Connection;
 
 
 
 public class Telas extends JFrame {
     
-    
-
-    private List<Produto> estoque = new ArrayList<>();
-    private static bancodedados banco = new bancodedados();
-    Venda venda = new Venda();
-    Venda vendaOriginal;
-  
-    public static void main(String[] args) {
+	public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 new Telas().setVisible(true);
             }
         });
-    }
+	}
+
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static bancodedados banco = new bancodedados();
+    Venda venda = new Venda();
+    Venda vendaOriginal;
+  
+    
 
     public Telas() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(600, 600); // Aumentei o tamanho para 600x600
         setLocationRelativeTo(null);
-        setLayout(new GridLayout(11, 1, 10, 10)); // Agora com 11 linhas
+        setLayout(new GridLayout(14, 1, 10, 10)); // Agora com 14 linhas // Agora com 14 linhas
 
         JButton btnAdicionarProduto = criarBotao("Adicionar Produto");
         JButton btnAtualizarProduto = criarBotao("Atualizar Produto");
@@ -53,7 +54,10 @@ public class Telas extends JFrame {
         JButton btnTroca = criarBotao("Troca");
         JButton btnDevolucao = criarBotao("Devolução");
         JButton btnConsultarVendaNF = criarBotao("Consultar Venda por NF");
-        JButton btnEstoque = criarBotao("Estoque"); // Novo botão Estoque
+        JButton btnEstoque = criarBotao("Estoque");
+        JButton btnVendasCompleta = criarBotao("Tabela Completa de Vendas");
+        JButton btnTrocasCompleta = criarBotao("Tabela Completa de Trocas");
+        JButton btnDevolucoesCompleta = criarBotao("Tabela Completa de Devoluções");
         JButton btnSair = criarBotao("Sair");
 
         add(btnAdicionarProduto);
@@ -66,7 +70,10 @@ public class Telas extends JFrame {
         add(btnTroca);
         add(btnDevolucao);
         add(btnConsultarVendaNF);
-        add(btnEstoque); // Adicionando o botão Estoque
+        add(btnEstoque);
+        add(btnVendasCompleta); // Adicionando o botão Tabela Completa de Vendas
+        add(btnTrocasCompleta); // Adicionando o botão Tabela Completa de Trocas
+        add(btnDevolucoesCompleta); // Adicionando o botão Tabela Completa de Devoluções
         add(btnSair);
 
         banco.conectar(); // Conectar ao banco de dados ao iniciar a aplicação
@@ -114,13 +121,22 @@ public class Telas extends JFrame {
                 abrirTelaEstoque();
                 break; 
             case "Troca":
-            	abrirTelaTroca();
+                abrirTelaTroca();
                 break;
             case "Devolução":
-            	abrirTelaDevolucao();
+                abrirTelaDevolucao();
                 break;
             case "Consultar Venda por NF":
                 abrirTelaConsultarVendaPorNotaFiscal();
+                break;
+            case "Tabela Completa de Vendas":
+            	abrirTelaVendasCompleta();
+                break;
+            case "Tabela Completa de Trocas":
+            	abrirTelaTrocasCompleta();
+                break;
+            case "Tabela Completa de Devoluções":
+            	abrirTelaDevolucoesCompleta();
                 break;
             case "Sair":
                 System.out.println("Saindo do programa. Até mais!");
@@ -130,6 +146,7 @@ public class Telas extends JFrame {
                 System.out.println("Opção inválida. Tente novamente.");
         }
     }
+
     public void abrirTelaDevolucao() {
         // Solicitar o número da nota fiscal ao usuário
         String inputNotaFiscal = JOptionPane.showInputDialog("Digite o número da nota fiscal:");
@@ -319,7 +336,7 @@ public class Telas extends JFrame {
         JTextField textField = new JTextField();
         JButton btnProcurar = new JButton("Procurar");
 
-        bancodedados banco = this.banco;  // Criar uma instância de bancodedados
+          // Criar uma instância de bancodedados
 
         btnProcurar.addActionListener(new ActionListener() {
             @Override
@@ -693,10 +710,6 @@ public class Telas extends JFrame {
         frame.setVisible(true);
     }
     
-    private Connection connection;	
-    
-    
-    
     private void gerarRelatorioVencimento() {
         try {
             // Chamar o método para obter a lista de produtos próximos ao vencimento
@@ -933,4 +946,19 @@ public class Telas extends JFrame {
    private void abrirTelaEstoque() {
     banco.BuscarEstoqueCompleto();
 }
+   private void abrirTelaVendasCompleta() {
+    banco.mostrarTabelaVendasCompleta();
+}
+
+// Método para abrir a tela de trocas
+private void abrirTelaTrocasCompleta() {
+    banco.mostrarTabelaTrocasCompleta();
+}
+
+// Método para abrir a tela de devoluções
+private void abrirTelaDevolucoesCompleta() {
+    banco.mostrarTabelaDevolucoesCompleta();
+}
+
+   
 }
