@@ -349,8 +349,16 @@ public class bancodedados {
 	        String sqlDeleteVenda = "DELETE FROM vendas WHERE numero_nota_fiscal = ?";
 	        PreparedStatement statementDeleteVenda = connection.prepareStatement(sqlDeleteVenda);
 	        statementDeleteVenda.setInt(1, numeroNotaFiscal);
-	        statementDeleteVenda.executeUpdate();
+	        int rowsAffected = statementDeleteVenda.executeUpdate();
 	        statementDeleteVenda.close();
+
+	        if (rowsAffected > 0) {
+	            // A venda foi excluída com sucesso
+	            System.out.println("Venda com Número da Nota Fiscal " + numeroNotaFiscal + " excluída com sucesso.");
+	        } else {
+	            // Nenhuma venda foi excluída (Nota Fiscal não encontrada)
+	            System.out.println("Nenhuma venda encontrada com Número da Nota Fiscal " + numeroNotaFiscal);
+	        }
 
 	        // Atualiza a quantidade do produto em estoque
 	        String sqlUpdateEstoque = "UPDATE Produto SET quantidade = quantidade + ? WHERE CodigoDeBarras = ?";
@@ -360,7 +368,8 @@ public class bancodedados {
 	        statementUpdateEstoque.executeUpdate();
 	        statementUpdateEstoque.close();
 
-	        System.out.println("Venda com Número da Nota Fiscal " + numeroNotaFiscal + " excluída com sucesso e quantidade do produto em estoque atualizada.");
+	        System.out.println("Quantidade do produto em estoque atualizada para Codigo de Barras " + codigoBarras);
+
 	        connection.commit();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
@@ -368,7 +377,8 @@ public class bancodedados {
 	}
 
 
-	public void registrarTrocaDevolucao(Troca troca, Venda vendaOriginal) {
+
+	public void registrarTroca(Troca troca, Venda vendaOriginal) {
 	    try {
 	        // Iniciar uma transação para garantir que todas as operações sejam executadas ou revertidas
 	        connection.setAutoCommit(false);
@@ -393,10 +403,18 @@ public class bancodedados {
 	        statementTroca.setString(1, troca.getNovoNomeProduto());
 	        statementTroca.setString(2, troca.getCodigoBarras());
 	        statementTroca.setInt(3, troca.getNovaQuantidade());
-	        statementTroca.setDouble(4, troca.getValorTroca());
-	        statementTroca.setDate(5, new java.sql.Date(troca.getDataTroca().getTime()));
-	        statementTroca.setString(6, troca.getVendedor()); // Defina o vendedor
-	        statementTroca.setInt(7, novoNumeroNotaTroca); // Use o novo número de nota de troca
+	        statementTroca.setDouble(4, troca.getNovoValor());
+
+	        // Se a data de troca não estiver definida, use a data atual
+	        if (troca.getDataTroca() != null) {
+	            statementTroca.setDate(5, new java.sql.Date(troca.getDataTroca().getTime()));
+	        } else {
+	            // Use a data atual do sistema
+	            statementTroca.setDate(5, new java.sql.Date(System.currentTimeMillis()));
+	        }
+
+	        statementTroca.setString(6, troca.getVendedor());
+	        statementTroca.setInt(7, novoNumeroNotaTroca);
 
 	        statementTroca.executeUpdate();
 
@@ -409,12 +427,11 @@ public class bancodedados {
 
 	        statementAtualizacao.executeUpdate();
 
-	       
-
 	        // Confirmar a transação
 	        connection.commit();
 
-	        System.out.println("Troca realizada com sucesso. Número da Nota de Troca: " + novoNumeroNotaTroca);
+	        // Exibir mensagem de sucesso
+	        JOptionPane.showMessageDialog(null, "Troca realizada com sucesso. Número da Nota de Troca: " + novoNumeroNotaTroca);
 
 	    } catch (SQLException e) {
 	        e.printStackTrace();
@@ -427,6 +444,7 @@ public class bancodedados {
 	        }
 	    }
 	}
+
 
 
 
@@ -542,8 +560,77 @@ public class bancodedados {
 		    } catch (SQLException e) {
 		        System.err.println("Erro ao buscar o estoque completo: " + e.getMessage());
 		    }
-		}
-}
+		
 
+
+	}
+	public void registrarDevolucao(int numeroNotaFiscal) {
+		    try {
+		    	String consultaUltimoNumeroDevolucaoSQL = "SELECT MAX(nota_devolucao) AS ultimo_numero FROM devolucoes";
+		    	PreparedStatement consultaUltimoNumeroDevolucaoStatement = connection.prepareStatement(consultaUltimoNumeroDevolucaoSQL);
+		    	ResultSet resultadoConsultaDevolucao = consultaUltimoNumeroDevolucaoStatement.executeQuery();
+		    	int ultimoNumeroNotaDevolucao = 0;
+
+		    	if (resultadoConsultaDevolucao.next()) {
+		    	    ultimoNumeroNotaDevolucao = resultadoConsultaDevolucao.getInt("ultimo_numero");
+		    	}
+		    	int novoNumeroNotaDevolucao = ultimoNumeroNotaDevolucao + 1;
+		     
+		        Venda vendaOriginal = consultarVendaPorNumeroNotaFiscal(numeroNotaFiscal);
+
+		        // Verificar se a venda original existe
+		        if (vendaOriginal != null) {
+		            // 2. Solicitar confirmação para devolução (Opcional)
+		            // int resposta = JOptionPane.showConfirmDialog(null, "Deseja realmente devolver esta venda?", "Confirmação", JOptionPane.YES_NO_OPTION);
+		            // if (resposta == JOptionPane.YES_OPTION) {
+
+		            // 3. Registrar a devolução na tabela devolucoes
+		        	String sqlDevolucao = "INSERT INTO devolucoes (nome, codigo_de_barras, quantidade, valor_devolucao, data_devolucao, vendedor, nota_devolucao) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		        	PreparedStatement statementDevolucao = connection.prepareStatement(sqlDevolucao);
+
+		        	statementDevolucao.setString(1, vendaOriginal.getNomeProduto());
+		        	statementDevolucao.setString(2, vendaOriginal.getCodigoBarras());
+		        	statementDevolucao.setInt(3, vendaOriginal.getQuantidade());
+		        	statementDevolucao.setDouble(4, vendaOriginal.getValorVenda());
+		        	statementDevolucao.setDate(5, new java.sql.Date(new Date().getTime())); // Usar a data do sistema
+		        	statementDevolucao.setString(6, vendaOriginal.getNomeVendedor()); // Substituir "valor_do_vendedor" pelo valor real
+		        	statementDevolucao.setInt(7, novoNumeroNotaDevolucao);// Usar o número da nota fiscal da venda original
+
+
+		            statementDevolucao.executeUpdate();
+
+		            // 4. Atualizar a quantidade em estoque na tabela Produto
+		            String sqlAtualizacaoEstoque = "UPDATE Produto SET quantidade = quantidade + ? WHERE CodigoDeBarras = ?";
+		            PreparedStatement statementAtualizacaoEstoque = connection.prepareStatement(sqlAtualizacaoEstoque);
+
+		            statementAtualizacaoEstoque.setInt(1, vendaOriginal.getQuantidade());
+		            statementAtualizacaoEstoque.setString(2, vendaOriginal.getCodigoBarras());
+
+		            statementAtualizacaoEstoque.executeUpdate();
+		            
+
+		            // 6. Confirmar a transação
+		            connection.commit();
+
+		            System.out.println("Devolução realizada com sucesso. Nota Fiscal Devolvida: " + numeroNotaFiscal);
+
+		            // } else {
+		            //     System.out.println("Devolução cancelada pelo usuário.");
+		            // }
+		        } else {
+		            JOptionPane.showMessageDialog(null, "Venda não encontrada. Verifique o número da nota fiscal.");
+		        }
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		        // Reverter a transação em caso de erro
+		        try {
+		            connection.rollback();
+		            System.out.println("Erro durante a devolução. A transação foi revertida.");
+		        } catch (SQLException rollbackException) {
+		            rollbackException.printStackTrace();
+		        }
+		    }
+		}
+	 }
 
 
